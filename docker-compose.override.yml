@@ -1,0 +1,117 @@
+version: "3.7"
+
+volumes:
+  app_gem_bundle:   # Used to store the app's gems
+  app_node_modules: # Used to store the app's node modules
+
+networks:
+  backend:
+
+services:
+  # The migration processor container - we'll use this as the base for the rest
+  # of the app service definitions:
+  migration: &app
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+      args:
+        DEVELOPER_USERNAME: ${USER}
+    image: icalialabs/rails-gci-saml-sso-demo:development
+    entrypoint: /usr/src/bin/dev-entrypoint.sh
+    volumes:
+      # Mount the app code into the app containers at the "/usr/src" folder:
+      - .:/usr/src
+
+      # For the "Gem bundle" and "Node modules" folders, here's what will be
+      # going on: This creates a local Docker volume with the contents of each
+      # folder at the original Docker image, and inside the container, it
+      # replaces the local contents with this volumes. Any gem or node package
+      # we add during development, will be present in these volumes.
+      #
+      # This offers various advantages:
+      #
+      # - Helps when running on macOS/Windows to speed up the npm package
+      #   loading performance. In contrast, using the local directory on mac/win
+      #   will be much slower, as the daemon would add watchers to sync the
+      #   contents between the host and the VM, taking a hit in performance.
+      # - We c app either from the host (i.e. macOS) or
+      #   using containers without having the host & container clobber the npm
+      #   each other's packages, or avoid conflicting versions for macOS / Linux
+      - app_gem_bundle:/usr/local/bundle
+      - app_node_modules:/usr/src/node_modules
+    networks:
+      - backend
+
+    # Keep the stdin open, so we can attach to our app container's process
+    # and do things such as byebug, etc:
+    stdin_open: true
+
+    # Enable sending signals (CTRL+C, CTRL+P + CTRL+Q) into the container:
+    tty: true
+
+    # Link to our postgres and redis services, so they can be visible from our
+    # app service containers:
+    depends_on:
+      - postgres
+
+    # The command we want to execute by default when running the container
+    command: rails db:migrate
+
+    # Specify environment variables available for our app containers. We'll
+    # leave a YML anchor in case we need to override or add more variables if
+    # needed on each app service:
+    environment: &app_environment
+      # We'll set the DATABASE_URL environment variable for the app to connect
+      # to our postgres container - no need to use a 'config/database.yml' file.
+      DATABASE_URL: postgres://postgres:3x4mpl3P455w0rd@postgres:5432/
+
+      # We'll set the RAILS_ENV and RACK_ENV environment variables to
+      # 'development', so our app containers will start in 'development' mode
+      # on this compose project:
+      RAILS_ENV: development
+      RACK_ENV: development
+      RAILS_LOG_TO_STDOUT: "true"
+      DEVELOPER_UID: ${DEVELOPER_UID:-1000}
+
+      # The SAML Callback address:
+      SAML_CALLBACK_ADDRESS: ${DEMO_URL:-http://localhost:3000}/users/saml
+      SAML_IDP_SSO_TARGET_URL: ${DEMO_SAML_IDP_SSO_TARGET_URL}
+      SAML_IDP_CERT_FINGERPRINT: ${DEMO_SAML_IDP_CERT_FINGERPRINT}
+
+      # Temporarily disable ruby 2.7 deprecation warnings, as rails still logs a
+      # lot of these:
+      RUBYOPT: -W:no-deprecated
+
+  web:
+    <<: *app
+    command: rails server -p 3000 -b 0.0.0.0
+    ports:
+      - ${DEMO_WEB_PORT:-3000}:3000
+    depends_on:
+      - webpacker
+      - postgres
+    environment:
+      <<: *app_environment
+      WEBPACKER_DEV_SERVER_HOST: webpacker
+
+  # This container autocompiles, serves and live-reloads Webpack assets
+  # (including our ReactJS code) for our development environment. This service
+  # is proxied by the `web` container, so there is no need to publish ports for
+  # it:
+  webpacker:
+    <<: *app
+    ports:
+      - ${DEMO_WEBPACKER_DEV_SERVER_PORT:-3035}:3035
+    command: webpack-dev-server
+    environment:
+      WEBPACKER_DEV_SERVER_HOST: 0.0.0.0
+      RAILS_ENV: development
+
+  test:
+    <<: *app
+    command: rspec
+    environment:
+      <<: *app_environment
+      RAILS_ENV: test
+      RACK_ENV: test
