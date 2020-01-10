@@ -3,9 +3,6 @@ version: "3.7"
 volumes:
   postgres_data:
 
-networks:
-  backend:
-
 services:
   postgres:
     image: postgres:10.6-alpine
@@ -14,7 +11,5 @@ services:
     volumes:
       # We'll store the postgres data in the 'postgres_data' volume we defined:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - backend
     environment:
       POSTGRES_PASSWORD: 3x4mpl3P455w0rd
