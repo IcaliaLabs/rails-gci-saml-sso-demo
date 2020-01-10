@@ -1,0 +1,37 @@
+version: "3.7"
+
+services:
+  # The migration processor container - we'll use this as the base for the rest
+  # of the app service definitions:
+  migration: &app
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: release
+      args:
+        DEVELOPER_UID: ${UID:-1000}
+        DEVELOPER_USERNAME: ${USER}
+    image: icalialabs/rails-gci-saml-sso-demo:latest
+    stdin_open: true
+    tty: true
+    depends_on:
+      - postgres
+    command: rails db:migrate
+    environment: &app_environment
+      DATABASE_URL: postgres://postgres:3x4mpl3P455w0rd@postgres:5432/demo_development
+      RAILS_ENV: production
+      RACK_ENV: production
+      RAILS_LOG_TO_STDOUT: "true"
+      SAML_CALLBACK_ADDRESS: ${DEMO_URL:-http://localhost:3000}/users/saml
+      SAML_IDP_SSO_TARGET_URL: ${DEMO_SAML_IDP_SSO_TARGET_URL}
+      SAML_IDP_CERT_FINGERPRINT: ${DEMO_SAML_IDP_CERT_FINGERPRINT}
+      RUBYOPT: -W:no-deprecated
+      
+      # This generated secret is meant for development purposes only - NEVER USE IT ANYWHERE ELSE!!!!
+      SECRET_KEY_BASE: 166af994cd8728818c70701ae6c01b08ed6c9e33ee27c035189ad1800f0a554af6e3e85f475d74044ff1bbc77bb58f449e624a3e8eb5f94eca16fefbda473e6f
+
+  web:
+    <<: *app
+    command: puma
+    ports:
+      - ${DEMO_WEB_PORT:-3000}:3000

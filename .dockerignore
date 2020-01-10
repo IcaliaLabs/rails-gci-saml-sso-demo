@@ -8,6 +8,7 @@
 # Ignore docker and environment files:
 *Dockerfile
 docker-compose*.yml
+staging-compose.yml
 **/*.env
 .dockerignore
 
