@@ -196,7 +196,11 @@ USER nobody
 # Step 39: Generate the temporary directories in case they don't already exist:
 RUN mkdir -p /usr/src/tmp/cache /usr/src/tmp/pids /usr/src/tmp/sockets
 
-# Step 40: Check that there are no issues with rails' load paths, missing gems,
+# Step 40: Temporarily disable ruby 2.7 deprecation warnings, as rails still
+# logs a lot of these:
+ENV RUBYOPT=-W:no-deprecated
+
+# Step 41: Check that there are no issues with rails' load paths, missing gems,
 # etc:
 RUN export DATABASE_URL=postgres://postgres@example.com:5432/fakedb \
     AWS_ACCESS_KEY_ID=SOME_ACCESS_KEY_ID \
@@ -204,10 +208,10 @@ RUN export DATABASE_URL=postgres://postgres@example.com:5432/fakedb \
     SECRET_KEY_BASE=10167c7f7654ed02b3557b05b88ece && \
     rails runner "puts 'Looks Good!'"
 
-# Step 41: Set the default command:
+# Step 42: Set the default command:
 CMD [ "puma" ]
 
-# Step 42 thru 46: Add label-schema.org labels to identify the build info:
+# Step 43 thru 47: Add label-schema.org labels to identify the build info:
 ARG SOURCE_BRANCH="master"
 ARG SOURCE_COMMIT="000000"
 ARG BUILD_DATE="2017-09-26T16:13:26Z"
