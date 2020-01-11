@@ -55,3 +55,6 @@ coffeelint.json
 
 # Ignore test coverage reports:
 coverage/*
+
+# Ignore deployment files:
+/deploy

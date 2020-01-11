@@ -75,3 +75,7 @@ examples.txt
 
 # Ignore rubocop cache:
 /.cache
+
+# Ignore deploy yaml files (do not recurse directories)
+/deploy/*.yml
+/deploy/*.yaml

@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sso-saml-demo-web # deployment.apps/sso-saml-demo-web
+  labels:
+    app: sso-saml-demo-web
+spec:
+  selector:
+    matchLabels:
+      app: sso-saml-demo-web
+  template:
+    metadata:
+      labels:
+        app: sso-saml-demo-web
+    spec:
+      containers:
+        - name: web
+          image: gcr.io/icalia-devops/rails-gci-saml-sso-demo:${THE_IMAGE_TAG_TO_USE}
+          ports:
+            - containerPort: 3000
+          
+          livenessProbe:
+            httpGet: { path: / , port: 3000 }
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          
+          readinessProbe:
+            httpGet: { path: / , port: 3000 }
+            initialDelaySeconds: 10
+            periodSeconds: 5
+
+          env:
+            - name: RAILS_SERVE_STATIC_FILES
+              value: "true"
+
+            - name: SAML_CALLBACK_ADDRESS
+              value: ${YOUR_SSO_SAML_DEMO_URL}/users/saml
+
+            - name: SAML_IDP_SSO_TARGET_URL
+              valueFrom:
+                secretKeyRef:
+                  name: sso-saml-demo
+                  key: SAML_IDP_SSO_TARGET_URL
+            
+            - name: SAML_IDP_CERT_FINGERPRINT
+              valueFrom:
+                secretKeyRef:
+                  name: sso-saml-demo
+                  key: SAML_IDP_CERT_FINGERPRINT
+              
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: sso-saml-demo
+                  key: DATABASE_URL
+
+            - name: SECRET_KEY_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: sso-saml-demo
+                  key: SECRET_KEY_BASE
