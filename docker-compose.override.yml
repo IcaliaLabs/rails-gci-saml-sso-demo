@@ -4,9 +4,6 @@ volumes:
   app_gem_bundle:   # Used to store the app's gems
   app_node_modules: # Used to store the app's node modules
 
-networks:
-  backend:
-
 services:
   # The migration processor container - we'll use this as the base for the rest
   # of the app service definitions:
@@ -40,8 +37,6 @@ services:
       #   each other's packages, or avoid conflicting versions for macOS / Linux
       - app_gem_bundle:/usr/local/bundle
       - app_node_modules:/usr/src/node_modules
-    networks:
-      - backend
 
     # Keep the stdin open, so we can attach to our app container's process
     # and do things such as byebug, etc:
