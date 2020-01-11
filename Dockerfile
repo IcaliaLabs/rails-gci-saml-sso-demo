@@ -99,48 +99,51 @@ RUN yarn install
 
 # Step 20: Receive the developer user's UID:
 ARG DEVELOPER_UID=1000
+
+# Step 21: Receive the developer user's username:
 ARG DEVELOPER_USERNAME=you
 
-# Step 21: Set the developer's UID as an environment variable:
+# Step 22: Set the developer's UID as an environment variable:
 ENV DEVELOPER_UID=${DEVELOPER_UID}
 
-# Step 22: Create the developer user:
+# Step 23: Create the developer user:
 RUN useradd -r -M -u ${DEVELOPER_UID} -d /usr/src -c "Developer User,,," ${DEVELOPER_USERNAME}
 
 # Stage III: Testing ===========================================================
 # In this stage we'll add the current code from the project's source, so we can
 # run tests with the code.
-# Step 23: Start off from the development stage image:
+
+# Step 24: Start off from the development stage image:
 FROM development AS testing
 
-# Step 24: Copy the rest of the application code
+# Step 25: Copy the rest of the application code
 COPY . /usr/src
 
-# Step 25: Set the enrtypoint:
+# Step 26: Set the enrtypoint:
 ENTRYPOINT [ "/usr/src/bin/dev-entrypoint.sh" ]
 
 # Stage IV: Builder ============================================================
 # In this stage we'll compile assets coming from the project's source, do some
 # tests and cleanup:
 
-# Step 26: Pick off from the testing stage image:
+# Step 27: Pick off from the testing stage image:
 FROM testing AS builder
 
-# Step 27: Precompile assets:
+# Step 28: Precompile assets:
 RUN export DATABASE_URL=postgres://postgres@example.com:5432/fakedb \
     SECRET_KEY_BASE=10167c7f7654ed02b3557b05b88ece \
     RAILS_ENV=production && \
     rails assets:precompile && \
     rails secret > /dev/null
 
-# Step 28: Remove installed gems that belong to the development & test groups -
+# Step 29: Remove installed gems that belong to the development & test groups -
 # the remaining gems will get copied to the releasable image in a later step:
 RUN bundle config without development:test && bundle clean
 
-# Step 29: Purge development/testing npm packages:
+# Step 30: Purge development/testing npm packages:
 RUN yarn install --production
 
-# Step 30: Remove files not used on release image:
+# Step 31: Remove files not used on release image:
 RUN rm -rf \
     .rspec \
     Guardfile \
@@ -164,30 +167,30 @@ RUN rm -rf \
 # In this stage, we build the final, releasable Docker image, which should be
 # smallest possible with the content generated on previous stages:
 
-# Step 31: Start off from the runtime stage image:
+# Step 32: Start off from the runtime stage image:
 FROM runtime AS release
 
-# Step 32: Set the RAILS/RACK_ENV and PORT default values:
+# Step 33: Set the RAILS/RACK_ENV and PORT default values:
 ENV RAILS_ENV=production RACK_ENV=production PORT=3000
 
-# Step 33: Copy the "su-exec" executable:
+# Step 34: Copy the "su-exec" executable:
 COPY --from=builder /usr/local/bin/su-exec /usr/local/bin/su-exec
 
-# Step 34: Copy the remaining installed gems from the "builder" stage:
+# Step 35: Copy the remaining installed gems from the "builder" stage:
 COPY --from=builder /usr/local/bundle /usr/local/bundle
 
-# Step 35: Copy from app code from the "builder" stage, which at this point
+# Step 36: Copy from app code from the "builder" stage, which at this point
 # should have the assets from the asset pipeline already compiled:
 COPY --from=builder --chown=nobody /usr/src /usr/src
 
-# Step 36: Generate the temporary directories in case they don't already exist:
+# Step 37: Generate the temporary directories in case they don't already exist:
 RUN mkdir -p /usr/src/tmp/cache /usr/src/tmp/pids /usr/src/tmp/sockets \
  && chown -R nobody:nobody /usr/src/tmp
 
-# Step 37: Set the container user to 'nobody':
+# Step 38: Set the container user to 'nobody':
 USER nobody
 
-# Step 38: Check that there are no issues with rails' load paths, missing gems,
+# Step 39: Check that there are no issues with rails' load paths, missing gems,
 # etc:
 RUN export DATABASE_URL=postgres://postgres@example.com:5432/fakedb \
     AWS_ACCESS_KEY_ID=SOME_ACCESS_KEY_ID \
@@ -195,10 +198,10 @@ RUN export DATABASE_URL=postgres://postgres@example.com:5432/fakedb \
     SECRET_KEY_BASE=10167c7f7654ed02b3557b05b88ece && \
     rails runner "puts 'Looks Good!'"
 
-# Step 39: Set the default command:
+# Step 40: Set the default command:
 CMD [ "puma" ]
 
-# Step 40 thru 44: Add label-schema.org labels to identify the build info:
+# Step 41 thru 45: Add label-schema.org labels to identify the build info:
 ARG SOURCE_BRANCH="master"
 ARG SOURCE_COMMIT="000000"
 ARG BUILD_DATE="2017-09-26T16:13:26Z"
