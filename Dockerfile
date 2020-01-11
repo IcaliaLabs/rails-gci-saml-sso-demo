@@ -134,7 +134,10 @@ FROM testing AS builder
  ENV DEVELOPER_UID=
 
  # Step 29: Precompile assets:
- RUN export DATABASE_URL=postgres://postgres@example.com:5432/fakedb \
+ RUN export RUBYOPT=-W:no-deprecated \
+    SAML_CALLBACK_ADDRESS=SOME_URL \
+    SAML_IDP_SSO_TARGET_URL=SOME_URL \
+    SAML_IDP_CERT_FINGERPRINT=SOME_FINGERPRINT \
     SECRET_KEY_BASE=10167c7f7654ed02b3557b05b88ece \
     RAILS_ENV=production && \
     rails assets:precompile && \
