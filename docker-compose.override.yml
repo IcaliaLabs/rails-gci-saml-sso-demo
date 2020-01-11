@@ -13,6 +13,7 @@ services:
       dockerfile: Dockerfile
       target: development
       args:
+        DEVELOPER_UID: ${UID:-1000}
         DEVELOPER_USERNAME: ${USER}
     image: icalialabs/rails-gci-saml-sso-demo:development
     entrypoint: /usr/src/bin/dev-entrypoint.sh
@@ -67,7 +68,6 @@ services:
       RAILS_ENV: development
       RACK_ENV: development
       RAILS_LOG_TO_STDOUT: "true"
-      DEVELOPER_UID: ${DEVELOPER_UID:-1000}
 
       # The SAML Callback address:
       SAML_CALLBACK_ADDRESS: ${DEMO_URL:-http://localhost:3000}/users/saml
