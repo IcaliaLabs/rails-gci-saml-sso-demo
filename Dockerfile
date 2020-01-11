@@ -190,12 +190,11 @@ COPY --from=builder /usr/local/bundle /usr/local/bundle
 # should have the assets from the asset pipeline already compiled:
 COPY --from=builder --chown=nobody /usr/src /usr/src
 
-# Step 38: Generate the temporary directories in case they don't already exist:
-RUN mkdir -p /usr/src/tmp/cache /usr/src/tmp/pids /usr/src/tmp/sockets \
- && chown -R nobody:nobody /usr/src/tmp
-
-# Step 39: Set the container user to 'nobody':
+# Step 38: Set the container user to 'nobody':
 USER nobody
+
+# Step 39: Generate the temporary directories in case they don't already exist:
+RUN mkdir -p /usr/src/tmp/cache /usr/src/tmp/pids /usr/src/tmp/sockets
 
 # Step 40: Check that there are no issues with rails' load paths, missing gems,
 # etc:
