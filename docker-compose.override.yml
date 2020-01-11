@@ -7,7 +7,7 @@ volumes:
 services:
   # The migration processor container - we'll use this as the base for the rest
   # of the app service definitions:
-  migration: &app
+  migrate: &app
     build:
       context: .
       dockerfile: Dockerfile
