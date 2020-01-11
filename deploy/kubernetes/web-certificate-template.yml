@@ -1,0 +1,7 @@
+apiVersion: networking.gke.io/v1beta1
+kind: ManagedCertificate
+metadata:
+  name: sso-saml-demo # managedcertificate.networking.gke.io/sso-saml-demo
+spec:
+  domains:
+    - ${YOUR_DOMAIN}

@@ -31,5 +31,8 @@ module Demo
 
     # Don't generate system test files.
     config.generators.system_tests = nil
+
+    # Install health_check as middleware:
+    config.middleware.insert_after Rails::Rack::Logger, HealthCheck::MiddlewareHealthcheck
   end
 end
