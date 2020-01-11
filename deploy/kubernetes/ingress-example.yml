@@ -1,0 +1,15 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: example-ingress # ingress.extensions/example-ingress
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: example-cluster-1
+    networking.gke.io/managed-certificates: "sso-saml-demo,another-example-cert" # string with comma-separated values
+spec:
+  rules:
+    - host: sso-saml-demo.example.com
+      http:
+        paths:
+          - backend:
+              serviceName: sso-saml-demo-web
+              servicePort: 3000
