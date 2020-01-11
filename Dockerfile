@@ -202,9 +202,9 @@ ENV RUBYOPT=-W:no-deprecated
 
 # Step 41: Check that there are no issues with rails' load paths, missing gems,
 # etc:
-RUN export DATABASE_URL=postgres://postgres@example.com:5432/fakedb \
-    AWS_ACCESS_KEY_ID=SOME_ACCESS_KEY_ID \
-    AWS_SECRET_ACCESS_KEY=SOME_SECRET_ACCESS_KEY \
+RUN export SAML_CALLBACK_ADDRESS=SOME_URL \
+    SAML_IDP_SSO_TARGET_URL=SOME_URL \
+    SAML_IDP_CERT_FINGERPRINT=SOME_FINGERPRINT \
     SECRET_KEY_BASE=10167c7f7654ed02b3557b05b88ece && \
     rails runner "puts 'Looks Good!'"
 
