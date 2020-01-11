@@ -129,21 +129,25 @@ ENTRYPOINT [ "/usr/src/bin/dev-entrypoint.sh" ]
 # Step 27: Pick off from the testing stage image:
 FROM testing AS builder
 
-# Step 28: Precompile assets:
-RUN export DATABASE_URL=postgres://postgres@example.com:5432/fakedb \
+# Step 28: Unset the DEVELOPER_UID env var - the script that switches the user
+ # won't act:
+ ENV DEVELOPER_UID=
+
+ # Step 29: Precompile assets:
+ RUN export DATABASE_URL=postgres://postgres@example.com:5432/fakedb \
     SECRET_KEY_BASE=10167c7f7654ed02b3557b05b88ece \
     RAILS_ENV=production && \
     rails assets:precompile && \
     rails secret > /dev/null
 
-# Step 29: Remove installed gems that belong to the development & test groups -
+# Step 30: Remove installed gems that belong to the development & test groups -
 # the remaining gems will get copied to the releasable image in a later step:
 RUN bundle config without development:test && bundle clean
 
-# Step 30: Purge development/testing npm packages:
+# Step 31: Purge development/testing npm packages:
 RUN yarn install --production
 
-# Step 31: Remove files not used on release image:
+# Step 32: Remove files not used on release image:
 RUN rm -rf \
     .rspec \
     Guardfile \
@@ -167,30 +171,30 @@ RUN rm -rf \
 # In this stage, we build the final, releasable Docker image, which should be
 # smallest possible with the content generated on previous stages:
 
-# Step 32: Start off from the runtime stage image:
+# Step 33: Start off from the runtime stage image:
 FROM runtime AS release
 
-# Step 33: Set the RAILS/RACK_ENV and PORT default values:
+# Step 34: Set the RAILS/RACK_ENV and PORT default values:
 ENV RAILS_ENV=production RACK_ENV=production PORT=3000
 
-# Step 34: Copy the "su-exec" executable:
+# Step 35: Copy the "su-exec" executable:
 COPY --from=builder /usr/local/bin/su-exec /usr/local/bin/su-exec
 
-# Step 35: Copy the remaining installed gems from the "builder" stage:
+# Step 36: Copy the remaining installed gems from the "builder" stage:
 COPY --from=builder /usr/local/bundle /usr/local/bundle
 
-# Step 36: Copy from app code from the "builder" stage, which at this point
+# Step 37: Copy from app code from the "builder" stage, which at this point
 # should have the assets from the asset pipeline already compiled:
 COPY --from=builder --chown=nobody /usr/src /usr/src
 
-# Step 37: Generate the temporary directories in case they don't already exist:
+# Step 38: Generate the temporary directories in case they don't already exist:
 RUN mkdir -p /usr/src/tmp/cache /usr/src/tmp/pids /usr/src/tmp/sockets \
  && chown -R nobody:nobody /usr/src/tmp
 
-# Step 38: Set the container user to 'nobody':
+# Step 39: Set the container user to 'nobody':
 USER nobody
 
-# Step 39: Check that there are no issues with rails' load paths, missing gems,
+# Step 40: Check that there are no issues with rails' load paths, missing gems,
 # etc:
 RUN export DATABASE_URL=postgres://postgres@example.com:5432/fakedb \
     AWS_ACCESS_KEY_ID=SOME_ACCESS_KEY_ID \
@@ -198,10 +202,10 @@ RUN export DATABASE_URL=postgres://postgres@example.com:5432/fakedb \
     SECRET_KEY_BASE=10167c7f7654ed02b3557b05b88ece && \
     rails runner "puts 'Looks Good!'"
 
-# Step 40: Set the default command:
+# Step 41: Set the default command:
 CMD [ "puma" ]
 
-# Step 41 thru 45: Add label-schema.org labels to identify the build info:
+# Step 42 thru 46: Add label-schema.org labels to identify the build info:
 ARG SOURCE_BRANCH="master"
 ARG SOURCE_COMMIT="000000"
 ARG BUILD_DATE="2017-09-26T16:13:26Z"
